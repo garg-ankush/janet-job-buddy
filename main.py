@@ -94,16 +94,8 @@ class JobHelper:
         })
         return
 
-    def check_if_chat_should_continue(self):
-        for word in ["goodbye", "Goodbye", "bye", "Goodbye!"]:
-            if word in self.history[-1]['content']:
-                return False
-        return True
-
     def help(self):
-        chat_should_continue = self.check_if_chat_should_continue()
-
-        while chat_should_continue:
+        while True:
             response = self.openAI.ChatCompletion.create(
                 model=self.model_name,
                 messages=self.history
@@ -131,7 +123,7 @@ class JobHelper:
             with open("history.json", "w") as file:
                 json.dump(self.history, file)
 
-        return
+            return
 
 
 def main():
