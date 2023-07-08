@@ -18,6 +18,7 @@ def generate_job_search_link(keywords):
 
     return search_url
 
+
 def send_email(sender_email, sender_password, recipient_email, subject, body):
     # SMTP server configuration (example for Gmail)
     smtp_server = 'smtp.gmail.com'
