@@ -1,8 +1,9 @@
 import json
-import base64
-import os
+import time
 from dotenv import load_dotenv
-
+from read_text import speak
+from record_audio import record_audio
+from transcribe_audio import transcribe_audio
 load_dotenv()
 
 # Constants
@@ -26,11 +27,10 @@ class JobHelper:
                             Here is a complete conversation that you can have as an agent helping someone with a job.
     
                         ===
-                        Pretend I'm a single mom living below the federal poverty link going to my local not for profit to find a
-                        job. Create a script for a not for profit client intake specialist conducting an informational interview
-                        on what are the client's job skills, job history, job interests, zip code, and, if applicable, education
+                        We are creating a script for a not for profit client intake specialist conducting an informational interview
+                        on what are the client's job skills, job history, job interests, email, zip code, and, if applicable, education
                         background . Write this to be understood by someone with a 7th grade reading level.
-                        ChatGPT
+                       
                         Client Intake Specialist: Good morning! Welcome to [Not-for-profit organization]. My name is
                         [Specialist's Name], and I'm here to help you find a job that suits your skills and interests. How can I
                         assist you today?
@@ -70,17 +70,17 @@ class JobHelper:
                         Is there anything else you'd like to add or any questions you have for me?
                         Client Intake Specialist: You're welcome! Stay positive, and we'll work together towards a better
                         future. Have a great day, and I'll be in touch soon.
-                        
+    
                         
                         ===
                         
-                        Your job is to act as the Client Intake Specialist and ask questions one by one to the client. 
+                        Your job is to act as Janet and ask questions 1 by 1 to the client.
                         
                         Goal:
                             1. Be as helpful as you can.
                             2. Only ask questions 1 at a time.
-                            4. You can only act as the client intake specialist and not as the client.
-                            5. Your name is Janet and you work at the Aspire Center.
+                            3. Your name is Janet and you work at the Aspire Center.
+                            4. Keep the responses short and simple.
                 '''}]
 
     def setup(self):
@@ -104,6 +104,8 @@ class JobHelper:
             if role == "assistant":
                 text_response = response['choices'][0]['message']['content']
                 print(text_response)
+                speak(text_response[6:])
+
                 self.history.append({
                     "role": role,
                     "content": text_response
@@ -113,17 +115,20 @@ class JobHelper:
                 if word in self.history[-1]['content']:
                     return
 
-            user_input = input("Response here: ")
+            record_audio(output_filename="output")
+            transcribed_audio = transcribe_audio("output")
+
+            print(f"Transcribed audio: {transcribed_audio}")
+
             self.history.append({
                 "role": "user",
-                "content": user_input
+                "content": transcribed_audio
             })
 
             # Open the file in write mode and write the data
-            with open("history.json", "w") as file:
+            with open(f"history-{time.time()}.json", "w") as file:
                 json.dump(self.history, file)
 
-            return
 
 
 def main():
