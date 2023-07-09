@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from read_text import speak
 from record_audio import record_audio
 from transcribe_audio import transcribe_audio
+from utilities import generate_email_json, send_email_from_json_attachment, generate_job_search_link
 load_dotenv()
 
 # Constants
@@ -102,16 +103,18 @@ class JobHelper:
             )
             role = response['choices'][0]['message']['role']
             if role == "assistant":
+                print("===Janet Thinking===")
+                print()
                 text_response = response['choices'][0]['message']['content']
+                speak(text_response[6:], timestamp=round(time.time()))
                 print(text_response)
-                speak(text_response[6:])
 
                 self.history.append({
                     "role": role,
                     "content": text_response
                 })
 
-            for word in ["goodbye", "Goodbye", "bye"]:
+            for word in ["goodbye", "Goodbye", "bye", "great day"]:
                 if word in self.history[-1]['content']:
                     return
 
@@ -129,10 +132,41 @@ class JobHelper:
             with open(f"history-{time.time()}.json", "w") as file:
                 json.dump(self.history, file)
 
+    # def find_keywords_for_jobs(self):
+    #     prompt = [{
+    #         "role": "user",
+    #         "content": "Find top 5 keywords in the following message that can be used as job search keywords: "
+    #     }]
+    #
+    #     response = self.openAI.ChatCompletion.create(
+    #         model=self.model_name,
+    #         messages=prompt + self.history
+    #     )
+    #
+    #     top_five_keywords = response['choices'][0]['message']['content']
+    #     print(top_five_keywords)
+    #     search_url = generate_job_search_link(top_five_keywords)
+    #     print(search_url)
+    #     generate_email_json(
+    #         sender_email="janet.helperbot@gmail.com",
+    #         recipient_email="janet.helperbot@gmail.com",
+    #         subject="Your new job lead",
+    #         body_file="email_txt.txt",
+    #         search_url=search_url,
+    #         json_file_path='.'
+    #     )
+    #
+    #     send_email_from_json_attachment(
+    #         json_file='.'
+    #     )
+    #
+    #     return
 
 
 def main():
     job_helper = JobHelper()
     job_helper.help()
+    # job_helper.find_keywords_for_jobs()
+
 
 main()
