@@ -66,7 +66,10 @@ def send_email_from_json_attachment(json_file, attachment_file=None):
     except Exception as e:
         logging.error("Failed to send email. Error: %s", str(e))
 
-def generate_email_json(sender_email, recipient_email, subject, body, json_file_path):
+def generate_email_json(sender_email, recipient_email, subject, body_file, json_file_path):
+    with open(body_file, 'r') as f:
+        body = f.read()
+
     email_data = {
         "sender_email": sender_email,
         "recipient_email": recipient_email,
