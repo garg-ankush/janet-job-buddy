@@ -30,7 +30,8 @@ def send_email_from_json_attachment(json_file, attachment_file=None):
     body = email_data.get('body', '')
 
     # Create a new SES resource
-    ses = boto3.client('ses', region_name='us-west-2')  # Specify your desired AWS region
+    ses = boto3.client('ses', region_name='us-west-2',aws_access_key_id='YOUR_ACCESS_KEY_ID',aws_secret_access_key='YOUR_SECRET_ACCESS_KEY')  
+    # Specify your desired AWS region
 
     # Create a multipart/mixed email and attach the text and document parts
     msg = MIMEMultipart('mixed')
