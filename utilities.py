@@ -19,8 +19,7 @@ def generate_job_search_link(keywords):
 
     return search_url
 
-
-def send_email_from_json(json_file):
+def send_email_from_json_attachment(json_file, attachment_file=None):
     # Load email information from JSON file
     with open(json_file) as f:
         email_data = json.load(f)
@@ -33,27 +32,37 @@ def send_email_from_json(json_file):
     # Create a new SES resource
     ses = boto3.client('ses', region_name='us-west-2')  # Specify your desired AWS region
 
-    # Send the email
+    # Create a multipart/mixed email and attach the text and document parts
+    msg = MIMEMultipart('mixed')
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+
+    # Attach the email body as a plain text part
+    body_text = MIMEText(body, 'plain')
+    msg.attach(body_text)
+
+    # Attach the document as an attachment if provided
+    if attachment_file:
+        with open(attachment_file, 'rb') as f:
+            attachment = MIMEApplication(f.read())
+        attachment.add_header('Content-Disposition', 'attachment', filename=attachment_file)
+        msg.attach(attachment)
+
     try:
-        response = ses.send_email(
+        # Send the email
+        response = ses.send_raw_email(
             Source=sender_email,
-            Destination={
-                'ToAddresses': [recipient_email]
-            },
-            Message={
-                'Subject': {
-                    'Data': subject
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body
-                    }
-                }
+            Destinations=[recipient_email],
+            RawMessage={
+                'Data': msg.as_string()
             }
         )
 
         logging.info("Email sent successfully!")
         logging.info("Message ID: %s", response['MessageId'])
+    except NoCredentialsError:
+        logging.error("Failed to send email. AWS credentials not found.")
     except Exception as e:
         logging.error("Failed to send email. Error: %s", str(e))
 
