@@ -2,7 +2,7 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 
 
-def record_audio(output_filename, sample_rate=44100, number_of_secs_to_record_for=10):
+def record_audio(output_filename, sample_rate=44100, number_of_secs_to_record_for=6):
     print("====Listening====")
     print()
     # Record audio
