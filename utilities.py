@@ -11,13 +11,13 @@ from botocore.exceptions import NoCredentialsError
 def generate_job_search_link(keywords):
     base_url = "https://www.indeed.com/jobs"
 
-    encoded_keywords = urllib.parse.quote(keywords)
+    #encoded_keywords = urllib.parse.quote(keywords)
 
-    query_params = {
-        "q": encoded_keywords,
-    }
-
-    search_url = base_url + "?" + urllib.parse.urlencode(query_params)
+    #query_params = {
+    #    "q": encoded_keywords,
+    #}
+    print(keywords) 
+    search_url = base_url + "?=" + "+".join(keywords)#urllib.parse.urlencode(query_params)
 
     return search_url
 
