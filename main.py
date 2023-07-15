@@ -139,13 +139,12 @@ class JobHelper:
     def find_keywords_for_jobs(self):
         prompt = [{
             "role": "user",
-            "content": "Find top 1 keyword in the following message that can be used as job search keywords: "
+            "content": """Find the top word in the previous message that can be used as job search.
+            
+                        Goals:
+                            1. Return a single word only.
+            """
         }]
-        # history_file_name = "/Users/ankushgarg/Desktop/projects/ai-hackathon/history/history-1689446660.910517.json"
-        #
-        # with open(history_file_name) as f:
-        #     history = json.load(f)
-        self.openAI.api_key = os.getenv("OPENAI_API_KEY")
 
         response = self.openAI.ChatCompletion.create(
             model=self.model_name,
