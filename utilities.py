@@ -1,12 +1,12 @@
 import os
 import urllib.parse
-import smtplib
 import pygame
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import logging
 import json
 import boto3
+from botocore.exceptions import NoCredentialsError
+
 
 def generate_job_search_link(keywords):
     base_url = "https://www.indeed.com/jobs"
@@ -22,9 +22,9 @@ def generate_job_search_link(keywords):
     return search_url
 
 
-def send_email_from_json_attachment(json_file, attachment_file=None):
+def send_email_from_json_attachment(json_file_path, attachment_file=None):
     # Load email information from JSON file
-    with open(json_file) as f:
+    with open(json_file_path) as f:
         email_data = json.load(f)
 
     sender_email = email_data.get('sender_email', '')
@@ -35,7 +35,7 @@ def send_email_from_json_attachment(json_file, attachment_file=None):
     # Create a new SES resource
     ses = boto3.client(
         'ses',
-        region_name='us-west-2',
+        region_name='us-east-1',
         aws_access_key_id=os.getenv("AWS_KEY"),
         aws_secret_access_key=os.getenv("AWS_SECRET")
     )  # Specify your desired AWS region
@@ -59,21 +59,19 @@ def send_email_from_json_attachment(json_file, attachment_file=None):
 
     try:
         # Send the email
-        response = ses.send_raw_email(
+        ses.send_raw_email(
             Source=sender_email,
             Destinations=[recipient_email],
             RawMessage={
                 'Data': msg.as_string()
             }
         )
-
-        logging.info("Email sent successfully!")
-        logging.info("Message ID: %s", response['MessageId'])
+        print("Email sent successfully!")
 
     except NoCredentialsError:
-        logging.error("Failed to send email. AWS credentials not found.")
+        print("Failed to send email. AWS credentials not found.")
     except Exception as e:
-        logging.error("Failed to send email. Error: %s", str(e))
+        print("Failed to send email. Error: %s", str(e))
 
 
 def generate_email_json(sender_email, recipient_email, subject, body_file, search_url, json_file_path):
