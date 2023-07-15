@@ -1,19 +1,19 @@
 import json
 import time
+import os
+import openai
 from dotenv import load_dotenv
 from read_text import speak
 from record_audio import record_audio
 from transcribe_audio import transcribe_audio
 from utilities import generate_email_json, send_email_from_json_attachment, generate_job_search_link
+
 load_dotenv()
 
 # Constants
 MAX_LENGTH_FOR_ARTICLE_SUMMARIES = 2000
 MAX_LENGTH_FOR_ARTICLE_AUDIO = 3000
 VOICE_ASSISTANT_NAME = "Joanna"
-
-import os
-import openai
 
 # Constants
 MODEL_NAME = "gpt-3.5-turbo"
@@ -96,29 +96,33 @@ class JobHelper:
         return
 
     def help(self):
+        history_file_name = f"history/history-{time.time()}.json"
+
         while True:
             response = self.openAI.ChatCompletion.create(
                 model=self.model_name,
                 messages=self.history
             )
             role = response['choices'][0]['message']['role']
-            if role == "assistant":
-                print("===Janet Thinking===")
-                print()
-                text_response = response['choices'][0]['message']['content']
-                speak(text_response[6:], timestamp=round(time.time()))
-                print(text_response)
 
-                self.history.append({
-                    "role": role,
-                    "content": text_response
-                })
+            text_response = response['choices'][0]['message']['content']
+            speak(text_response[6:], timestamp=round(time.time()))
+            print(text_response)
 
+            self.history.append({
+                "role": role,
+                "content": text_response
+            })
+
+            # Exit if the end of conversation is reached
             for word in ["goodbye", "Goodbye", "bye", "great day"]:
                 if word in self.history[-1]['content']:
                     return
 
+            # Record user's input
             record_audio(output_filename="output")
+
+            # Transcribe user's input
             transcribed_audio = transcribe_audio("output")
 
             print(f"Transcribed audio: {transcribed_audio}")
@@ -129,44 +133,49 @@ class JobHelper:
             })
 
             # Open the file in write mode and write the data
-            with open(f"history-{time.time()}.json", "w") as file:
+            with open(history_file_name, "w") as file:
                 json.dump(self.history, file)
 
-    # def find_keywords_for_jobs(self):
-    #     prompt = [{
-    #         "role": "user",
-    #         "content": "Find top 5 keywords in the following message that can be used as job search keywords: "
-    #     }]
-    #
-    #     response = self.openAI.ChatCompletion.create(
-    #         model=self.model_name,
-    #         messages=prompt + self.history
-    #     )
-    #
-    #     top_five_keywords = response['choices'][0]['message']['content']
-    #     print(top_five_keywords)
-    #     search_url = generate_job_search_link(top_five_keywords)
-    #     print(search_url)
-    #     generate_email_json(
-    #         sender_email="janet.helperbot@gmail.com",
-    #         recipient_email="janet.helperbot@gmail.com",
-    #         subject="Your new job lead",
-    #         body_file="email_txt.txt",
-    #         search_url=search_url,
-    #         json_file_path='.'
-    #     )
-    #
-    #     send_email_from_json_attachment(
-    #         json_file='.'
-    #     )
-    #
-    #     return
+    def find_keywords_for_jobs(self):
+        prompt = [{
+            "role": "user",
+            "content": "Find top 5 keywords in the following message that can be used as job search keywords: "
+        }]
+        # history_file_name = "/Users/ankushgarg/Desktop/projects/ai-hackathon/history/history-1689446660.910517.json"
+        #
+        # with open(history_file_name) as f:
+        #     history = json.load(f)
+        self.openAI.api_key = os.getenv("OPENAI_API_KEY")
+
+        response = self.openAI.ChatCompletion.create(
+            model=self.model_name,
+            messages=prompt + self.history[1:]
+        )
+
+        top_five_keywords = response['choices'][0]['message']['content']
+        print(top_five_keywords)
+        search_url = generate_job_search_link(top_five_keywords)
+        generate_email_json(
+            sender_email="janet.helperbot@gmail.com",
+            recipient_email="janet.helperbot@gmail.com",
+            subject="Your new job lead",
+            body_file="email_txt.txt",
+            search_url=search_url,
+            json_file_path="email.json"
+        )
+
+        send_email_from_json_attachment(
+            json_file_path="email.json"
+        )
+
+        return
 
 
 def main():
     job_helper = JobHelper()
-    job_helper.help()
-    # job_helper.find_keywords_for_jobs()
+    job_helper.setup()
+    # job_helper.help()
+    job_helper.find_keywords_for_jobs()
 
 
 main()
