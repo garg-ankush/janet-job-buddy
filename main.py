@@ -139,7 +139,7 @@ class JobHelper:
     def find_keywords_for_jobs(self):
         prompt = [{
             "role": "user",
-            "content": "Find top 5 keywords in the following message that can be used as job search keywords: "
+            "content": "Find top 1 keyword in the following message that can be used as job search keywords: "
         }]
         # history_file_name = "/Users/ankushgarg/Desktop/projects/ai-hackathon/history/history-1689446660.910517.json"
         #
@@ -154,6 +154,7 @@ class JobHelper:
 
         top_five_keywords = response['choices'][0]['message']['content']
         print(top_five_keywords)
+        print(generate_job_search_link(top_five_keywords))
         search_url = generate_job_search_link(top_five_keywords)
         generate_email_json(
             sender_email="janet.helperbot@gmail.com",
@@ -174,7 +175,7 @@ class JobHelper:
 def main():
     job_helper = JobHelper()
     job_helper.setup()
-    # job_helper.help()
+    job_helper.help()
     job_helper.find_keywords_for_jobs()
 
 
